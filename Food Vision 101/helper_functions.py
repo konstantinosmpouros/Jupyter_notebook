@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
 import pandas as pd
+import numpy as np
 
 sns.set_style('whitegrid')
 
@@ -93,3 +94,27 @@ def preprocess_img(image, label, img_shape=224):
     """
     image = tf.image.resize(image, [img_shape, img_shape])  # reshape to img_shape
     return tf.cast(image, tf.float32), label  # return (float32_image, label) tuple
+
+
+def check_models_have_close_weights(model1, model2):
+    # Check if both models have the same number of layers
+    if len(model1.layers) != len(model2.layers):
+        print("Models have different number of layers")
+    else:
+        for layer1, layer2 in zip(model1.layers, model2.layers):
+            weights1 = layer1.get_weights()
+            weights2 = layer2.get_weights()
+            
+            # Check if the layers have the same number of weight matrices
+            if len(weights1) != len(weights2):
+                print("Layers have different number of weight matrices")
+            
+            # Compare each weight matrix
+            flag = True
+            for w1, w2 in zip(weights1, weights2):
+                if not np.allclose(w1, w2, atol=1e-7):
+                    print("Weights in a layer are not equal")
+                    flag = False
+
+        if flag:
+            print("Both models have the same weights in all layers")
