@@ -87,7 +87,7 @@ def random_img_show(train_data, class_names):
 
 
 # Make a function for preprocessing images
-def preprocess_img(image, label, img_shape=224):
+def preprocess_img(image, label, img_shape=227):
     """
     Converts image datatype from 'uint8' -> 'float32' and reshapes image to
     [img_shape, img_shape, color_channels]
