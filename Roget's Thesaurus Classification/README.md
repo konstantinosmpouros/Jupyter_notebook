@@ -29,15 +29,4 @@ The project's implementation is divided in three primary parts. The Data collect
 
 - **Prediction**: With the embeddings as input, machine learning models were trained to predict the class and section for each word. This predictive analysis helps in understanding how well the embeddings capture the semantic relationships and can be used to categorize words based on their meanings.
 
-## Reproducibility Instructions
-
-If you wish to rerun the Jupyter notebooks included in this project to reproduce the results or explore further, please follow these guidelines:
-
-- **Environment Setup**: This project uses Poetry for dependency management to ensure a consistent environment. Make sure you have Poetry installed on your system. Once installed, navigate to the project directory and run `poetry install` to install all necessary dependencies in a virtual environment.
-
-- **Before run anything**: Make sure you have unziped the files of the embeddings if you to run first notebook like Roget's Clustering that need the embeddings file to be in json format and not zipped.
-  
-- **Running the Notebooks**: After setting up the environment, activate the virtual environment created by Poetry by running `poetry shell`. Then, launch Jupyter Notebook or JupyterLab by running `jupyter notebook` or `jupyter lab` in the terminal. You can then navigate to the notebook files and run them.
-
-- **Expected Duration**: The total runtime can vary significantly based on your hardware and the specific models being used. As a rough estimate, expect the data collection and embeddings creation phase to take some minutes, depending on your internet connection and processing power. The clustering and machine learning model training phases are computationally intensive, especially for large datasets like this case, and takes multiple hours to complete with a min time consumption of 30min and max about 1.5 hours. It's recommended to run these processes on a machine with sufficient CPU and memory resources cause the models are designed to drain all the computational power of the cpu in order to run as fast as possible.
 
