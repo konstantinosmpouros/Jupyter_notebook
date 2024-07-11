@@ -1,11 +1,31 @@
+
 Athens Airbnb Exploration/Datasets/*
 Food Vision 101/Dataset/*
 House Prices in Marla/Datasets/*
 Insurances/Datasets/*
+Roget's Thesaurus Classification/Dataset/*
 Student Stress Factors/Datasets/*
 US Business stats/Datasets/*
 Why Civil Resistance Work/Datasets/*
 
 
+Athens Airbnb Exploration/.ipynb_checkpoints/*
+Food Vision 101/.ipynb_checkpoints/*
+House Prices in Marla/.ipynb_checkpoints/*
+Insurances/.ipynb_checkpoints/*
+Insurances/Graphs/.ipynb_checkpoints/
+Roget's Thesaurus Classification/.ipynb_checkpoints/*
+Student Stress Factors/.ipynb_checkpoints/*
+US Business stats/.ipynb_checkpoints/*
+Why Civil Resistance Work/.ipynb_checkpoints/*
+
+
 Food Vision 101/models/*
 Food Vision 101/model_checkpoints/*
+Roget's Thesaurus Classification/Lamma 2/*
+
+
+ChatGPT API Keys.txt
+
+
+.ipynb_checkpoints/*
