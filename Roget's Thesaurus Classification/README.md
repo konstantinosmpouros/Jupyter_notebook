@@ -13,17 +13,19 @@ The project's implementation is divided in three primary parts. The Data collect
   3. **Roget's Embending's Class Prediction**
   4. **Roget's Embending's Section Prediction**
 
-### Data Collection and Embeddings creation
+### Data Collection and Embeddings
 
 - **Web Scraping**: The initial step involved scraping Roget's Thesaurus (Available on project Gutenberg) to extract all the words. This process provided the raw data needed for further analysis.
 
-- **Embedding Generation**: For each word obtained from the thesaurus, embeddings were created. These embeddings serve as numerical representations of the words, capturing their semantic meanings in a multidimensional space. In the creation of the embeddings phase we used 2 different model to process the words. These models are the **sentece transformer** and the **universal sentence encoder**.
+- **Embedding Generation**: For each word obtained from the thesaurus, embeddings were created. These embeddings serve as numerical representations of the words, capturing their semantic meanings in a multidimensional space. In the creation of the embeddings phase we used 4 different model to process the words. These models are the **sentece transformer**, the **universal sentence encoder** and the **Gemma1.1-2B-it** and **Gemma1.1-7B-it**.
+
+- **Embedding Storage**: In order to be able to store and quickly query the embeddings created, we stored the embeddings in vector databases, which are designed specifically to store and query effectively in the embedding space.
 
 ### Clustering
 
 - **Two-Level Clustering**: The words were clustered on two different levels to explore their semantic relationships:
   1. **First Level (Class Clustering)**: Words were clustered into 6 broad classes. This high-level categorization provides a general grouping of words based on their overarching meanings.
-  2. **Second Level (Section Clustering**: A more granular clustering was performed to divide the words into 24 sections. This detailed segmentation allows for a finer understanding of the semantic nuances among the words.
+  2. **Second Level (Section Clustering**: A more granular clustering was performed to divide the words into 39 sections. This detailed segmentation allows for a finer understanding of the semantic nuances among the words.
 
 ### Predictions with Machine Learning Models
 
