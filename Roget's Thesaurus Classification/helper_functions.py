@@ -3,6 +3,7 @@ import numpy as np
 import re
 
 from matplotlib import pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 
 import faiss
@@ -14,6 +15,8 @@ from sklearn.metrics.pairwise import cosine_distances
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from umap import UMAP
+
+sns.set_style('whitegrid')
 
 
 def clean_sub_categ(paragraph):
@@ -197,6 +200,7 @@ def embeddings_2d_projection_hued(coordinates_list, dr, hue, legend_columns=3, l
 
     Returns:
     --------
+    None
         This function displays the plots and does not return any value.
     """
     fig, axs = plt.subplots(1, len(coordinates_list), figsize=(30, 6))
@@ -334,8 +338,9 @@ def spectral_clustering(embeddings, num_clusters, col_name, filter_class=None, p
 
     Returns:
     -----------
-    pd.DataFrame: A DataFrame containing the cluster labels for the filtered data points with the
-                  same index as the filtered embeddings.
+    pd.DataFrame:
+        A DataFrame
+        containing the cluster labels for the filtered data points with the same index as the filtered embeddings.
     """
 
     # Initialize Spectral Clustering
@@ -381,6 +386,7 @@ def clustering_plot(coordinates, hue, title, saving_loc, legend_columns=3, legen
 
         Returns:
         --------
+        None
             The function saves the plot to the specified location and displays it.
     """
     plots = len(coordinates.columns) // 2
@@ -516,7 +522,6 @@ def cosine_distance_check(embeddings, clusters, classes):
     Returns:
     -----------
     pd.DataFrame:
-
         A DataFrame where each row corresponds to a cluster,
         and each column represents the cosine distance between the average embedding of the cluster
         and the average embedding of a class.
@@ -531,7 +536,7 @@ def cosine_distance_check(embeddings, clusters, classes):
         cluster_indexes = clusters[clusters == cluster].index
         avg_cluster_embedding = embeddings.loc[cluster_indexes].mean(axis=0)
 
-        new_row = [cluster]
+        new_row = ['Cluster ' + str(cluster)]
 
         for categ in classes.unique():
             # For every class compute the average embedding
@@ -546,4 +551,118 @@ def cosine_distance_check(embeddings, clusters, classes):
 
     columns = ['Cluster'] + [cls for cls in classes.unique()]
     results = pd.DataFrame(results, columns=columns)
-    return results.set_index('Cluster')
+    results.set_index('Cluster', inplace=True)
+    results.sort_index(inplace=True)
+    return results.T
+
+
+def intersection_check(clusters, classes, metric):
+    """
+    Calculate the intersection metrics between clusters and classes.
+
+    Parameters:
+    -----------
+    clusters (pd.Series):
+        Series containing cluster assignments for each data point.
+
+    classes (pd.Series):
+        Series containing class assignments for each data point.
+
+    metric (str):
+        The metric to calculate and return. Options are 'precision', 'recall', and 'f1'.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame where each row corresponds to a class and each column to a cluster, containing the calculated metric values.
+    """
+    # Get unique class labels
+    required_keys = classes.unique()
+
+    # Initialize accumulator dictionary to store results for each class-cluster combination
+    accumulator = {key: {} for key in required_keys}
+
+    # Iterate over each unique cluster
+    for cluster in clusters.dropna().unique():
+        cluster_indexes = clusters[clusters == cluster].index
+        cluster_len = len(cluster_indexes)
+
+        # Iterate over each unique class
+        for cls in classes.unique():
+            class_indexes = classes[classes == cls].index
+            class_len = len(class_indexes)
+
+            # Convert indexes to sets for intersection calculation
+            cluster_indexes_set, class_indexes_set = set(cluster_indexes), set(class_indexes)
+            intersection = len(cluster_indexes_set.intersection(class_indexes_set))
+
+            if intersection > 0:
+                # Calculate Precision-like measure
+                P_ij = intersection / cluster_len
+
+                # Calculate Recall-like measure
+                R_ij = intersection / class_len
+
+                # Calculate the harmonized metric (F1 score)
+                H_ij = (2 * P_ij * R_ij) / (P_ij + R_ij)
+            else:
+                P_ij, R_ij, H_ij = 0, 0, 0
+
+            # Store the selected metric in the accumulator
+            if metric == 'precision':
+                accumulator[cls][cluster] = P_ij
+            elif metric == 'recall':
+                accumulator[cls][cluster] = R_ij
+            elif metric == 'f1':
+                accumulator[cls][cluster] = H_ij
+
+    # Convert accumulator to DataFrame and sort by index for clarity
+    accumulator = pd.DataFrame(accumulator)
+    return accumulator.sort_index().T
+
+
+def similarity_plots(embeddings, clustering, rogert_class, metric='f1'):
+    # Plot cosine distances heatmap
+    rs = cosine_distance_check(embeddings, clustering, rogert_class)
+
+    # Create a custom green to red colormap
+    green_to_red = LinearSegmentedColormap.from_list("GreenRed", ['#52fa52', "#ffff4f", '#ff411f'])
+
+    # Plotting the confusion matrix
+    plt.figure(figsize=(14, 7))
+    sns.heatmap(rs, annot=True, fmt=".2f", cmap=green_to_red, cbar=True, linewidths=0.5, vmin=0, vmax=2)
+
+    plt.title('Cosine Distances', fontsize=15)
+    plt.xlabel(None)
+    plt.ylabel(None)
+    plt.show()
+
+    # Plot intersection graph
+    rs = intersection_check(clustering, rogert_class, metric)
+
+    rs_melted = rs.reset_index().melt(id_vars='index', var_name='Clusters', value_name='Values')
+
+    # Rename the columns to match the labels you want
+    rs_melted.columns = ['Row', 'Clusters', 'Values']
+
+    # Create the plot using Seaborn
+    plt.figure(figsize=(8, 6))
+    sns.lineplot(data=rs_melted, x='Clusters', y='Values', hue='Row', marker='o')
+
+    # Add labels and title
+    plt.xlabel('Clusters')
+    plt.ylabel('Values')
+    plt.title('Line Plot of Each Row')
+
+    # Customize legend
+    plt.legend(
+        title='Classes',
+        bbox_to_anchor=(1.32, 0.5),
+        loc='upper center',
+        ncol=1,
+        fontsize='x-small',  # Smaller font size
+        title_fontsize='small'
+    )
+
+    plt.grid(True)
+    plt.show()
