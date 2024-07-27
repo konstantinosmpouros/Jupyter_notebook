@@ -621,7 +621,9 @@ def intersection_check(clusters, classes, metric):
     return accumulator.sort_index().T
 
 
-def similarity_plots(embeddings, clustering, rogert_class, metric='f1'):
+def similarity_plots(embeddings, clustering, rogert_class, title, metric='f1'):
+    fig, axs = plt.subplots(2, 1, figsize=(22, 15))
+
     # Plot cosine distances heatmap
     rs = cosine_distance_check(embeddings, clustering, rogert_class)
 
@@ -629,33 +631,28 @@ def similarity_plots(embeddings, clustering, rogert_class, metric='f1'):
     green_to_red = LinearSegmentedColormap.from_list("GreenRed", ['#52fa52', "#ffff4f", '#ff411f'])
 
     # Plotting the confusion matrix
-    plt.figure(figsize=(14, 7))
-    sns.heatmap(rs, annot=True, fmt=".2f", cmap=green_to_red, cbar=True, linewidths=0.5, vmin=0, vmax=2)
+    sns.heatmap(rs, annot=True, fmt=".2f", cmap=green_to_red, cbar=True, linewidths=0.5, vmin=0, vmax=2, ax=axs[0])
 
-    plt.title('Cosine Distances', fontsize=15)
-    plt.xlabel(None)
-    plt.ylabel(None)
-    plt.show()
+    axs[0].set_title('Cosine Distances', fontsize=15)
+    axs[0].set_xlabel(None)
+    axs[0].set_ylabel(None)
 
     # Plot intersection graph
     rs = intersection_check(clustering, rogert_class, metric)
-
     rs_melted = rs.reset_index().melt(id_vars='index', var_name='Clusters', value_name='Values')
 
     # Rename the columns to match the labels you want
     rs_melted.columns = ['Row', 'Clusters', 'Values']
 
-    # Create the plot using Seaborn
-    plt.figure(figsize=(8, 6))
-    sns.lineplot(data=rs_melted, x='Clusters', y='Values', hue='Row', marker='o')
+    sns.lineplot(data=rs_melted, x='Clusters', y='Values', hue='Row', marker='o', ax=axs[1])
 
     # Add labels and title
-    plt.xlabel('Clusters')
-    plt.ylabel('Values')
-    plt.title('Line Plot of Each Row')
+    axs[1].set_xlabel('Clusters')
+    axs[1].set_ylabel('Values')
+    axs[1].set_title('Line Plot of Each Row')
 
     # Customize legend
-    plt.legend(
+    axs[1].legend(
         title='Classes',
         bbox_to_anchor=(1.32, 0.5),
         loc='upper center',
@@ -664,5 +661,10 @@ def similarity_plots(embeddings, clustering, rogert_class, metric='f1'):
         title_fontsize='small'
     )
 
-    plt.grid(True)
+    # Adjust layout to make sure everything fits without overlap
+    plt.tight_layout()  # Adjust right padding for the legend
+
+    # Save the figure with tight bounding box
+    fig.savefig(f'Figures/Clustering/{title}.png', bbox_inches='tight')
+
     plt.show()
