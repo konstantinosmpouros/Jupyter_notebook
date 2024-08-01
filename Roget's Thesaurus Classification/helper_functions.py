@@ -16,6 +16,8 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from umap import UMAP
 
+from scipy.optimize import linear_sum_assignment
+
 sns.set_style('whitegrid')
 
 
@@ -569,12 +571,14 @@ def intersection_check(clusters, classes, metric):
         Series containing class assignments for each data point.
 
     metric (str):
-        The metric to calculate and return. Options are 'precision', 'recall', and 'f1'.
+        The metric to calculate and return.
+        Options are 'Precision', 'Recall', and 'Harmonic'.
 
     Returns:
     --------
     pd.DataFrame
-        DataFrame where each row corresponds to a class and each column to a cluster, containing the calculated metric values.
+        DataFrame where each row corresponds to a class and each column to a cluster,
+        containing the calculated metric values.
     """
     # Get unique class labels
     required_keys = classes.unique()
@@ -609,11 +613,11 @@ def intersection_check(clusters, classes, metric):
                 P_ij, R_ij, H_ij = 0, 0, 0
 
             # Store the selected metric in the accumulator
-            if metric == 'precision':
+            if metric == 'Precision':
                 accumulator[cls][cluster] = P_ij
-            elif metric == 'recall':
+            elif metric == 'Recall':
                 accumulator[cls][cluster] = R_ij
-            elif metric == 'f1':
+            elif metric == 'Harmonic':
                 accumulator[cls][cluster] = H_ij
 
     # Convert accumulator to DataFrame and sort by index for clarity
@@ -621,16 +625,47 @@ def intersection_check(clusters, classes, metric):
     return accumulator.sort_index().T
 
 
-def similarity_plots(embeddings, clustering, rogert_class, title, metric='f1'):
-    fig, axs = plt.subplots(2, 1, figsize=(22, 15))
+def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmonic'):
+    """
+    Generate plots to visualize the similarity between classes using cosine distances and a specified metric.
+
+    Parameters:
+    -----------
+    embeddings (array-like):
+        Array-like structure containing the embedding vectors of the data points.
+
+    clustering (array-like):
+        Array-like structure containing the clustering labels for the data points.
+
+    rogert_class (array-like):
+        Array-like structure containing the ground truth class labels for the data points.
+
+    title (str):
+        The title of the plot, which will also be used as the filename for saving the figure.
+
+    metric (str):
+        The metric to use for the intersection check.
+        Options are 'Precision', 'Recall', and 'Harmonic'.
+        Default is 'Harmonic'.
+
+    Returns:
+    --------
+    None
+
+    This function creates two plots:
+        1. A heatmap of cosine distances between clusters and classes.
+        2. A line plot showing class similarity according to the specified metric.
+
+    The resulting figure is saved as a PNG file in the 'Figures/Clustering/' directory with the specified title.
+    """
+
+    fig, axs = plt.subplots(2, 1, figsize=(22, 16))
 
     # Plot cosine distances heatmap
     rs = cosine_distance_check(embeddings, clustering, rogert_class)
 
     # Create a custom green to red colormap
     green_to_red = LinearSegmentedColormap.from_list("GreenRed", ['#52fa52', "#ffff4f", '#ff411f'])
-
-    # Plotting the confusion matrix
     sns.heatmap(rs, annot=True, fmt=".2f", cmap=green_to_red, cbar=True, linewidths=0.5, vmin=0, vmax=2, ax=axs[0])
 
     axs[0].set_title('Cosine Distances', fontsize=15)
@@ -648,23 +683,153 @@ def similarity_plots(embeddings, clustering, rogert_class, title, metric='f1'):
 
     # Add labels and title
     axs[1].set_xlabel('Clusters')
-    axs[1].set_ylabel('Values')
-    axs[1].set_title('Line Plot of Each Row')
+    axs[1].set_ylabel(f'{metric} value')
+    axs[1].set_title(f'Classes similarity plot according to {metric}-like metric', fontsize=15)
 
     # Customize legend
     axs[1].legend(
         title='Classes',
-        bbox_to_anchor=(1.32, 0.5),
+        bbox_to_anchor=(1.22, 0.5),
         loc='upper center',
         ncol=1,
         fontsize='x-small',  # Smaller font size
         title_fontsize='small'
     )
 
-    # Adjust layout to make sure everything fits without overlap
+    # Adjust the layout to make sure everything fits without overlap
     plt.tight_layout()  # Adjust right padding for the legend
 
     # Save the figure with tight bounding box
     fig.savefig(f'Figures/Clustering/{title}.png', bbox_inches='tight')
 
     plt.show()
+
+
+def optimal_cosine_assignment(embeddings, class_clustering, rogert_words):
+    """
+    Find the optimal assignment of classes to clusters that minimizes the total cost using the Hungarian algorithm.
+
+    Parameters:
+    -----------
+    embeddings : array-like
+        The embeddings of the data points used to compute cosine distances.
+
+    class_clustering : pd.DataFrame
+        DataFrame where each column represents different clustering solutions,
+        and each cell contains the cluster assignment of a data point.
+
+    rogert_words : pd.DataFrame
+        DataFrame containing class assignments for each data point.
+        It must have at least two columns: 'Class' and 'Section'.
+
+    Returns:
+    --------
+    best_col : str
+        The name of the column in `class_clustering` that provides the optimal clustering solution.
+
+    best_cost : float
+        The minimum total cost of the optimal assignment.
+
+    results : pd.DataFrame
+        DataFrame containing the optimal assignments for each cluster '<best_col>_Cluster'.
+    """
+
+    results = pd.DataFrame()
+    best_cost = np.inf
+    best_col = class_clustering.columns[0]
+
+    for col in class_clustering.columns:
+        # Compute the cosine distance matrix for the given clustering column
+        rs = cosine_distance_check(embeddings, class_clustering[col], rogert_words.Class)
+
+        # Initialize the cost matrix
+        cost_matrix = rs.values
+
+        # Apply the Hungarian algorithm to find the optimal assignment
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+
+        # The optimal assignment is given by the pairs (row_ind[i], col_ind[i])
+        assignments = list(zip(rs.index, col_ind))
+
+        # Create a DataFrame to show the optimal assignments
+        optimal_assignments = pd.DataFrame(assignments, columns=[f'{col}_Class', f'{col}_Cluster'], index=rs.index)
+
+        # Calculate the total minimum cost
+        total_cost = cost_matrix[row_ind, col_ind].sum()
+
+        optimal_assignments.drop(columns=[f'{col}_Class'], inplace=True)
+
+        # Check and update the best cost and results
+        if total_cost < best_cost:
+            best_cost = round(total_cost, 5)
+            results = optimal_assignments
+            best_col = col
+
+    return best_col, best_cost, results
+
+
+def optimal_intersection_assignment(embeddings, class_clustering, rogert_words, metric='Harmonic'):
+    """
+    Find the optimal assignment of classes to clusters that maximizes the total intersection score using the Hungarian algorithm.
+
+    Parameters:
+    -----------
+    embeddings : array-like
+        The embeddings of the data points used to compute intersection scores (not used in the current implementation).
+
+    class_clustering : pd.DataFrame
+        DataFrame where each column represents different clustering solutions,
+        and each cell contains the cluster assignment of a data point.
+
+    rogert_words : pd.DataFrame
+        DataFrame containing class assignments for each data point.
+        It must have at least one column: 'Class'.
+
+    metric : str, optional
+        The metric used to compute the intersection score, by default 'Harmonic'.
+
+    Returns:
+    --------
+    best_col : str
+        The name of the column in `class_clustering` that provides the optimal clustering solution.
+
+    best_cost : float
+        The maximum total intersection score of the optimal assignment.
+
+    results : pd.DataFrame
+        DataFrame containing the optimal assignments for each cluster in the best clustering solution.
+    """
+    
+    results = pd.DataFrame()
+    best_cost = -np.inf
+    best_col = class_clustering.columns[0]
+
+    for col in class_clustering.columns:
+        # Compute the intersection score matrix for the given clustering column
+        rs = intersection_check(class_clustering[col], rogert_words.Class, metric)
+
+        # Initialize cost matrix for maximization
+        cost_matrix = rs.values
+        cost_matrix = -cost_matrix
+
+        # Apply the Hungarian algorithm to find the optimal assignment
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+
+        # The optimal assignment is given by the pairs (row_ind[i], col_ind[i])
+        assignments = list(zip(rs.index, col_ind))
+
+        # Create a DataFrame to show the optimal assignments
+        optimal_assignments = pd.DataFrame(assignments, columns=[f'{col}_Class', f'{col}_Cluster'], index=rs.index)
+
+        # Calculate the total minimum cost
+        total_cost = -cost_matrix[row_ind, col_ind].sum()
+
+        optimal_assignments.drop(columns=[f'{col}_Class'], inplace=True)
+
+        # Check and update the best cost and results
+        if total_cost > best_cost:
+            best_cost = round(total_cost, 5)
+            results = optimal_assignments
+            best_col = col
+
+    return best_col, best_cost, results
