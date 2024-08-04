@@ -293,9 +293,15 @@ def faiss_kmeans(embeddings, num_clusters):
     return labels
 
 
-def gaussian_mixture(embeddings, num_clusters):
+def gaussian_mixture(embeddings, num_clusters, pca=None):
     """
-    Applies Gaussian Mixture Model (GMM) clustering to the provided embeddings.
+    Applies Gaussian Mixture Model (GMM) clustering to the provided embeddings with optional pca reduction.
+
+    This function uses the Gaussian Mixture algorithm to cluster the provided embeddings into
+    a specified number of clusters.
+    Optionally, it can filter the data based on embeddings' dimension,
+    where we can determine the percentage of the dimensions that will be used.
+    The dimensions of the embeddings are decreased using the PCA algorithm.
 
     Parameters:
     -----------
@@ -306,14 +312,26 @@ def gaussian_mixture(embeddings, num_clusters):
     num_clusters : int
         The number of clusters to form as well as the number of Gaussian distributions.
 
+    pca : float
+        The percentage of dimensions we will use of the original dimensions of the embeddings.
+        The dimensions will be decreased with the PCA algorithm.
+        Default is 1 (100%), meaning that we will use 100% of the original dimensions.
+
+
     Returns:
     --------
     labels : array, shape (n_samples,)
         The labels of the clusters for each sample in the data.
     """
     gmm = GaussianMixture(n_components=num_clusters)
-    gmm.fit(embeddings)
-    return gmm.predict(embeddings)
+    if pca is not None and 1.0 > pca > 0.0:
+        components = int(embeddings.shape[1] * pca)
+        pca = PCA(n_components=components)
+        embeddings_reduced = pca.fit_transform(embeddings)
+
+        return gmm.fit_predict(embeddings_reduced)
+    else:
+        return gmm.fit_predict(embeddings)
 
 
 def spectral_clustering(embeddings, num_clusters, col_name, filter_class=None, percent=0.5):
