@@ -655,7 +655,7 @@ def intersection_check(clusters, classes, metric):
     return accumulator.sort_index().T
 
 
-def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmonic'):
+def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmonic', figsize=(22, 16), legend_x=1.22, legend_y=0.5):
     """
     Generate plots to visualize the similarity between classes using cosine distances and a specified metric.
 
@@ -678,6 +678,15 @@ def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmon
         Options are 'Precision', 'Recall', and 'Harmonic'.
         Default is 'Harmonic'.
 
+    figsize (tuple):
+        The dimensions of the total plot.
+
+    legend_x (float):
+        The legends x bbox_to_anchor value.
+
+    legend_y (float):
+        The legends y bbox_to_anchor value.
+
     Returns:
     --------
     None
@@ -689,7 +698,7 @@ def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmon
     The resulting figure is saved as a PNG file in the 'Figures/Clustering/' directory with the specified title.
     """
 
-    fig, axs = plt.subplots(2, 1, figsize=(22, 16))
+    fig, axs = plt.subplots(2, 1, figsize=figsize)
 
     # Plot cosine distances heatmap
     rs = cosine_distance_check(embeddings, clustering, rogert_class)
@@ -719,7 +728,7 @@ def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmon
     # Customize legend
     axs[1].legend(
         title='Classes',
-        bbox_to_anchor=(1.22, 0.5),
+        bbox_to_anchor=(legend_x, legend_y),
         loc='upper center',
         ncol=1,
         fontsize='x-small',  # Smaller font size
@@ -735,7 +744,7 @@ def similarity_plots(embeddings, clustering, rogert_class, title, metric='Harmon
     plt.show()
 
 
-def optimal_cosine_assignment(embeddings, class_clustering, rogert_words):
+def optimal_cosine_assignment(embeddings, class_clustering, rogert_words_categ):
     """
     Find the optimal assignment of classes to clusters that minimizes the total cost using the Hungarian algorithm.
 
@@ -770,7 +779,7 @@ def optimal_cosine_assignment(embeddings, class_clustering, rogert_words):
 
     for col in class_clustering.columns:
         # Compute the cosine distance matrix for the given clustering column
-        rs = cosine_distance_check(embeddings, class_clustering[col], rogert_words.Class)
+        rs = cosine_distance_check(embeddings, class_clustering[col], rogert_words_categ)
 
         # Initialize the cost matrix
         cost_matrix = rs.values
@@ -782,7 +791,7 @@ def optimal_cosine_assignment(embeddings, class_clustering, rogert_words):
         assignments = list(zip(rs.index, col_ind))
 
         # Create a DataFrame to show the optimal assignments
-        optimal_assignments = pd.DataFrame(assignments, columns=[f'{col}_Class', f'{col}_Cluster'], index=rs.index)
+        optimal_assignments = pd.DataFrame(assignments, columns=[f'{col}_Class', f'{col}_Cosine_Assign'], index=rs.index)
 
         # Calculate the total minimum cost
         total_cost = cost_matrix[row_ind, col_ind].sum()
@@ -798,7 +807,7 @@ def optimal_cosine_assignment(embeddings, class_clustering, rogert_words):
     return best_col, best_cost, results
 
 
-def optimal_intersection_assignment(class_clustering, rogert_words, metric='Harmonic'):
+def optimal_intersection_assignment(class_clustering, rogert_words_categ, metric='Harmonic'):
     """
     Find the optimal assignment of classes to clusters that maximizes the total intersection score using the Hungarian algorithm.
 
@@ -833,7 +842,7 @@ def optimal_intersection_assignment(class_clustering, rogert_words, metric='Harm
 
     for col in class_clustering.columns:
         # Compute the intersection score matrix for the given clustering column
-        rs = intersection_check(class_clustering[col], rogert_words.Class, metric)
+        rs = intersection_check(class_clustering[col], rogert_words_categ, metric)
 
         # Initialize cost matrix for maximization
         cost_matrix = rs.values
@@ -846,7 +855,7 @@ def optimal_intersection_assignment(class_clustering, rogert_words, metric='Harm
         assignments = list(zip(rs.index, col_ind))
 
         # Create a DataFrame to show the optimal assignments
-        optimal_assignments = pd.DataFrame(assignments, columns=[f'{col}_Class', f'{col}_Cluster'], index=rs.index)
+        optimal_assignments = pd.DataFrame(assignments, columns=[f'{col}_Class', f'{col}_Inter_Assign'], index=rs.index)
 
         # Calculate the total minimum cost
         total_cost = -cost_matrix[row_ind, col_ind].sum()
