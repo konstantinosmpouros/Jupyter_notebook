@@ -315,7 +315,7 @@ def gaussian_mixture(embeddings, num_clusters, pca=None):
     pca : float
         The percentage of dimensions we will use of the original dimensions of the embeddings.
         The dimensions will be decreased with the PCA algorithm.
-        Default is 1 (100%), meaning that we will use 100% of the original dimensions.
+        Default is None, meaning that we will use 100% of the original dimensions.
 
 
     Returns:
@@ -334,13 +334,15 @@ def gaussian_mixture(embeddings, num_clusters, pca=None):
         return gmm.fit_predict(embeddings)
 
 
-def spectral_clustering(embeddings, num_clusters, col_name, filter_class=None, percent=0.5):
+def spectral_clustering(embeddings, num_clusters, col_name, filter_class=None, percent=0.5, pca=None):
     """
-    Perform spectral clustering on given embeddings with optional filtering.
+    Perform spectral clustering on given embeddings with optional filtering per class and dimensionality reduction of the embeddings.
 
     This function uses the Spectral Clustering algorithm to cluster the provided embeddings into
     a specified number of clusters.
-    Optionally, it can filter the data based on class labels before clustering to reduce the number of embeddings.
+    Optionally,
+    it can filter the data based on class labels before clustering to reduce the number of embeddings,
+    and apply the PCA algorithm to reduce the dimensions of the embeddings.
 
     Parameters:
     -----------
@@ -355,6 +357,10 @@ def spectral_clustering(embeddings, num_clusters, col_name, filter_class=None, p
     percent (float, optional):
         The percentage of data points to sample per class if filter_class is provided.
         Default to 0.5.
+    pca : float
+        The percentage of dimensions we will use of the original dimensions of the embeddings.
+        The dimensions will be decreased with the PCA algorithm.
+        Default is None, meaning that we will use 100% of the original dimensions.
 
     Returns:
     -----------
@@ -376,7 +382,13 @@ def spectral_clustering(embeddings, num_clusters, col_name, filter_class=None, p
         indx = embeddings.index
 
     # Train and predict the data
-    labels = sc.fit_predict(embeddings.loc[indx])
+    if pca is not None and 1.0 > pca > 0.0:
+        components = int(embeddings.shape[1] * pca)
+        pca = PCA(n_components=components)
+        embeddings_reduced = pd.DataFrame(pca.fit_transform(embeddings))
+        labels = sc.fit_predict(embeddings_reduced.loc[indx])
+    else:
+        labels = sc.fit_predict(embeddings.loc[indx])
 
     return pd.DataFrame(labels, index=indx, columns=[col_name])
 
@@ -786,15 +798,12 @@ def optimal_cosine_assignment(embeddings, class_clustering, rogert_words):
     return best_col, best_cost, results
 
 
-def optimal_intersection_assignment(embeddings, class_clustering, rogert_words, metric='Harmonic'):
+def optimal_intersection_assignment(class_clustering, rogert_words, metric='Harmonic'):
     """
     Find the optimal assignment of classes to clusters that maximizes the total intersection score using the Hungarian algorithm.
 
     Parameters:
     -----------
-    embeddings : array-like
-        The embeddings of the data points used to compute intersection scores (not used in the current implementation).
-
     class_clustering : pd.DataFrame
         DataFrame where each column represents different clustering solutions,
         and each cell contains the cluster assignment of a data point.
