@@ -18,6 +18,8 @@ from umap import UMAP
 
 from scipy.optimize import linear_sum_assignment
 
+from sklearn.metrics import confusion_matrix
+
 sns.set_style('whitegrid')
 
 
@@ -869,3 +871,51 @@ def optimal_intersection_assignment(class_clustering, rogert_words_categ, metric
             best_col = col
 
     return best_col, best_cost, results
+
+
+def confusion_matrix_plot(y_true, predictions, title, save, figsize=(10, 8)):
+    """
+    Plot a confusion matrix with percentage annotations and save the figure.
+
+    Parameters:
+    -----------
+    y_true : array-like
+        True labels of the data.
+
+    predictions : array-like
+        Predicted labels of the model.
+
+    title : str
+        The title of the plot.
+
+    save : str
+        The name to save the figure as, excluding the file extension.
+
+    figsize : tuple of int, optional
+        The size of the figure, by default (10, 8).
+
+    Returns:
+    --------
+    None
+        The function saves the confusion matrix plot as a PNG file and displays it.
+    """
+    plt.figure(figsize=figsize)
+
+    # Calculate confusion matrix
+    cm = confusion_matrix(y_true, predictions)
+
+    # Calculate the percentage of true positives for each class
+    cm_percentage = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis] * 100
+
+    # Format the percentages to include the '%' sign
+    cm_percentage_text = np.array([["{:.2f}%".format(value) for value in row] for row in cm_percentage])
+
+    # Use seaborn to create a heatmap with formatted text annotations
+    sns.heatmap(cm_percentage, annot=cm_percentage_text, cmap='Blues', fmt='', annot_kws={"size": 10}, vmin=0, vmax=100)
+
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title(f'{title} Confusion Matrix')
+
+    plt.savefig(f'Figures/Modeling {save}.png')
+    plt.show()
