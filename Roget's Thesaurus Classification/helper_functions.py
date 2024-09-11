@@ -19,6 +19,9 @@ from umap import UMAP
 from scipy.optimize import linear_sum_assignment
 
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+
+from tensorflow.keras.layers import MultiHeadAttention, LayerNormalization, Dense
 
 sns.set_style('whitegrid')
 
@@ -919,3 +922,155 @@ def confusion_matrix_plot(y_true, predictions, title, save, figsize=(10, 8)):
 
     plt.savefig(f'Figures/Modeling {save}.png')
     plt.show()
+
+
+def plot_history(history, label):
+    """
+    Plots the training and validation loss and accuracy from the model's history.
+
+    Parameters:
+    -----------
+    history : keras.callbacks.History
+        The History object returned by the `fit` method of a Keras model.
+        This object contains the training and validation loss and accuracy metrics recorded during the training process.
+
+    label : str
+        A string containing the path where the plot will be saved in a png format.
+
+    Returns:
+    --------
+    None
+        This function does not return any value.
+        It generates and displays plots for the training and validation loss and accuracy.
+    """
+    # Extract metrics from the history object
+    loss = history.history.get('loss')
+    accuracy = history.history.get('accuracy')
+    val_loss = history.history.get('val_loss')
+    val_accuracy = history.history.get('val_accuracy')
+
+    epochs = range(1, len(loss) + 1)
+
+    # Create a figure and four subplots (if validation data is present)
+    if val_loss and val_accuracy:
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+        # Plot loss
+        ax1.plot(epochs, loss, label='Training Loss')
+        ax1.plot(epochs, val_loss, label='Validation Loss', linestyle='--')
+        ax1.set_title('Loss')
+        ax1.set_xlabel('Epochs')
+        ax1.set_ylabel('Loss')
+        ax1.legend()
+
+        # Plot accuracy
+        ax2.plot(epochs, accuracy, label='Training Accuracy')
+        ax2.plot(epochs, val_accuracy, label='Validation Accuracy', linestyle='--')
+        ax2.set_title('Accuracy')
+        ax2.set_xlabel('Epochs')
+        ax2.set_ylabel('Accuracy')
+        ax2.legend()
+
+    else:
+        # Create a figure and two subplots (if no validation data is present)
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+        # Plot loss
+        ax1.plot(epochs, loss, label='Training Loss')
+        ax1.set_title('Training Loss')
+        ax1.set_xlabel('Epochs')
+        ax1.set_ylabel('Loss')
+        ax1.legend()
+
+        # Plot accuracy
+        ax2.plot(epochs, accuracy, label='Training Accuracy')
+        ax2.set_title('Training Accuracy')
+        ax2.set_xlabel('Epochs')
+        ax2.set_ylabel('Accuracy')
+        ax2.legend()
+
+    # Show the plots
+    plt.tight_layout()
+    plt.savefig('Figures/' + label + '.png')
+    plt.show()
+
+
+def class_report(model, X_test, y_test):
+    """
+    Evaluates the model's predictions by generating a classification report.
+
+    Parameters:
+    -----------
+    model : keras.Model
+        The trained Keras model to be evaluated.
+
+    X_test : numpy.ndarray
+        The input features for the test set.
+
+    y_test : numpy.ndarray
+        The true labels for the test set, which should be in one-hot encoded format.
+
+    Returns:
+    --------
+    None
+        This function does not return any value. It prints the classification report.
+    """
+    # Predict class probabilities
+    y_pred_prob = model.predict(X_test)
+
+    # Convert probabilities to class labels
+    y_pred = np.argmax(y_pred_prob, axis=1)
+
+    # If y_test is one-hot encoded, convert it to class labels
+    y_test_labels = np.argmax(y_test, axis=1) if y_test.ndim > 1 else y_test
+
+    # Print the classification report
+    print(classification_report(y_test_labels, y_pred))
+
+
+def transformer_block(x, num_heads, embedding_dim, ffn_units, block_name):
+    """
+        Implements a single Transformer block with multi-head attention and feed-forward network.
+
+        The function applies the following operations:
+
+        1. Multi-Head Attention
+        2. Add & Normalize
+        3. Feed-Forward Network
+        4. Add & Normalize
+
+        Each sub-layer (Multi-Head Attention and Feed-Forward Network) has a residual connection
+        around it, followed by layer normalization.
+
+        Parameters:
+        -----------
+            x (tf.Tensor):
+                Input tensor.
+            num_heads (int):
+                Number of attention heads.
+            embedding_dim (int):
+                Dimension of the embedding space.
+            ffn_units (int):
+                Number of units in the first dense layer of the feed-forward network.
+            block_name (str):
+                Name prefix for the layers in this block.
+
+        Returns:
+        --------
+            tf.Tensor: Output tensor after applying the Transformer block.
+    """
+
+    # Multi-Head Attention
+    attention_output = MultiHeadAttention(num_heads=num_heads, key_dim=embedding_dim,
+                                          name=f'MultiHeadAttention_{block_name}')(x, x)
+    # Add & Layer Normalization
+    attention_output = LayerNormalization(epsilon=1e-6, name=f'LayerNormalization_{block_name}_1')(attention_output + x)
+
+    # Feed-Forward Network
+    ffn = Dense(ffn_units, activation='relu', name=f'Dense_{block_name}_1')(attention_output)
+    ffn = Dense(embedding_dim, name=f'Dense_{block_name}_2')(ffn)
+
+    # Add & Layer Normalization
+    output = LayerNormalization(epsilon=1e-6, name=f'LayerNormalization_{block_name}_2')(ffn + attention_output)
+
+    return output
