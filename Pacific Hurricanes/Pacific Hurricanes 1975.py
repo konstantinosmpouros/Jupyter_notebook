@@ -12,6 +12,26 @@ import requests
 from openai import OpenAI
 
 
+def create_prompt(paragraph):
+    prompt = f"""
+    Extract the following information from the given paragraph:
+    1. Number of deaths
+    2. Start date
+    3. End date
+    4. Affected areas
+
+    Paragraph:
+    {paragraph}
+
+    Please provide the information in the following format, if no information provided reply None or 0:
+    - Number of deaths: <number_of_deaths>
+    - Start date: <start_date>
+    - End date: <end_date>
+    - Affected areas: <affected_areas>
+    """
+    return prompt
+
+
 url = 'https://en.wikipedia.org/wiki/1975_Pacific_hurricane_season'
 response = requests.get(url)
 soup = BeautifulSoup(response.text, 'html.parser')
@@ -64,26 +84,6 @@ client = OpenAI(
     organization=org_key,
     project=prj_key
 )
-
-
-def create_prompt(paragraph):
-    prompt = f"""
-    Extract the following information from the given paragraph:
-    1. Number of deaths
-    2. Start date
-    3. End date
-    4. Affected areas
-
-    Paragraph:
-    {paragraph}
-
-    Please provide the information in the following format, if no information provided reply None or 0:
-    - Number of deaths: <number_of_deaths>
-    - Start date: <start_date>
-    - End date: <end_date>
-    - Affected areas: <affected_areas>
-    """
-    return prompt
 
 
 for i in range(len(data)):
