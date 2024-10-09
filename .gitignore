@@ -1,44 +1,50 @@
-
-Athens Airbnb Exploration/Datasets/*
-Food Vision 101/Dataset/*
-House Prices in Marla/Datasets/*
-Insurances/Datasets/*
-Roget's Thesaurus Classification/Dataset/*
-Roget's Thesaurus Classification/Embeddings/*
-Roget's Thesaurus Classification/Models/*
-Student Stress Factors/Datasets/*
-US Business stats/Datasets/*
-Why Civil Resistance Work/Datasets/*
-
-
-Athens Airbnb Exploration/.ipynb_checkpoints/*
-Food Vision 101/.ipynb_checkpoints/*
-House Prices in Marla/.ipynb_checkpoints/*
-Insurances/.ipynb_checkpoints/*
-Insurances/Graphs/.ipynb_checkpoints/
-Roget's Thesaurus Classification/.ipynb_checkpoints/*
-Student Stress Factors/.ipynb_checkpoints/*
-US Business stats/.ipynb_checkpoints/*
-Why Civil Resistance Work/.ipynb_checkpoints/*
-Pacific Hurricanes/.ipynb_checkpoints/*
-Computer Vision Generator/.ipynb_checkpoints/*
-
-
-Food Vision 101/models/*
-Food Vision 101/model_checkpoints/*
-
-Coputer Vision Generator/TODO.txt
-
-
 ChatGPT API Keys.txt
 
 
 .ipynb_checkpoints/*
 
+
 Athens Airbnb Exploration/desktop.ini
-Coputer Vision Generator/.ipynb_checkpoints/
+Athens Airbnb Exploration/.ipynb_checkpoints/*
+Athens Airbnb Exploration/Datasets/*
+
+
+Computer Vision Generator/.ipynb_checkpoints/*
+Coputer Vision Generator/TODO.txt
+
+
 Food Vision 101/desktop.ini
+Food Vision 101/models/*
+Food Vision 101/model_checkpoints/*
+Food Vision 101/.ipynb_checkpoints/*
+Food Vision 101/Dataset/*
+
+
 House Prices in Marla/desktop.ini
-Pacific Hurricanes/desktop.ini
+House Prices in Marla/.ipynb_checkpoints/*
+House Prices in Marla/Datasets/*
+
+
+Roget's Thesaurus Classification/desktop.ini
+Roget's Thesaurus Classification/Dataset/*
+Roget's Thesaurus Classification/Embeddings/*
+Roget's Thesaurus Classification/Models/*
+Roget's Thesaurus Classification/.ipynb_checkpoints/*
+
+
+Student Stress Factors/Datasets/*
+Student Stress Factors/.ipynb_checkpoints/*
+
+
 US Business stats/desktop.ini
+US Business stats/Datasets/*
+US Business stats/.ipynb_checkpoints/*
+
+
 Why Civil Resistance Work/desktop.ini
+Why Civil Resistance Work/.ipynb_checkpoints/*
+Why Civil Resistance Work/Datasets/*
+
+
+Pacific Hurricanes/desktop.ini
+Pacific Hurricanes/.ipynb_checkpoints/*
