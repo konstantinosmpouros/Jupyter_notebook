@@ -3,7 +3,7 @@
 
 ## Overview
 
-**Computer Vision Generator** is a cutting-edge project that leverages multiple Large Language Models (LLMs) from Hugging Face and OpenAI to generate high-quality images, refine them, and create videos. This project integrates various models for image generation, enhancement, and sequential video creation to deliver smooth visual outputs.
+**Computer Vision Generator** is a cutting-edge project that leverages multiple Large Language Models (LLMs) from Hugging Face and OpenAI, and more, to generate high-quality images, refine them, and create videos. This project integrates various models for image generation, enhancement, and sequential video creation to deliver smooth visual outputs.
 
 
 ## Features
@@ -50,6 +50,14 @@
 1. **Hugging Face Models**:
 
    - **AuraSR V2**: A super-resolution model that enhances low-resolution images by refining details and improving clarity.<br>
+
+2. **TorchVision**:
+
+   - **Mask RCNN Resnet50**: A powerful object detection model that identifies and segments objects in images, providing pixel-level masks alongside bounding boxes for accurate localization.<br>
+
+3. **Detectron**:
+
+   - **Detectron2**: A robust framework for object detection and segmentation tasks that offers state-of-the-art performance with flexible architecture and support for various model types, including Faster R-CNN and Mask R-CNN.<br>
 
 
 ## Video Generator Models Used
